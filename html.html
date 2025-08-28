@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cafe Website</title>
+  <link rel="stylesheet" href="css.css">
+</head>
+<body>
+  <header>
+    <h1>☕ My Cafe</h1>
+    <div id="datetime"></div>
+  </header>
+
+  <main>
+    <!-- -------- MENU SECTION -------- -->
+    <section id="menu-section">
+      <h2>Menu</h2>
+      <div id="menu-list"></div>
+
+      <div id="add-menu-item">
+        <input type="text" id="item-name" placeholder="Item name">
+        <input type="number" id="item-price" placeholder="Price">
+        <button onclick="addMenuItem()">Add Item</button>
+      </div>
+    </section>
+
+    <!-- -------- BILLING SECTION -------- -->
+    <section id="billing-section">
+      <h2>Billing</h2>
+      <table id="bill-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h3 id="grand-total">Grand Total: ₹0</h3>
+    </section>
+  </main>
+
+  <script>
+    // ---- Date Time ----
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById("datetime").innerText =
+        now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }) +
+        " " + now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // ---- MENU ----
+    let menu = [
+      { name: "Espresso", price: 120 },
+      { name: "Cappuccino", price: 150 },
+      { name: "Muffin", price: 80 }
+    ];
+
+    function renderMenu() {
+      const menuList = document.getElementById("menu-list");
+      menuList.innerHTML = "";
+      menu.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <span>${item.name} - ₹${item.price}</span>
+          <button onclick="addToBill(${index})">Add</button>
+          <button onclick="removeMenuItem(${index})" class="remove">x</button>
+        `;
+        menuList.appendChild(div);
+      });
+    }
+
+    function addMenuItem() {
+      const name = document.getElementById("item-name").value.trim();
+      const price = parseFloat(document.getElementById("item-price").value);
+      if (name && !isNaN(price)) {
+        menu.push({ name, price });
+        renderMenu();
+        document.getElementById("item-name").value = "";
+        document.getElementById("item-price").value = "";
+      }
+    }
+
+    function removeMenuItem(index) {
+      menu.splice(index, 1);
+      renderMenu();
+    }
+
+    // ---- BILL ----
+    let bill = [];
+
+    function addToBill(menuIndex) {
+      const item = menu[menuIndex];
+      const existing = bill.find(b => b.name === item.name);
+      if (existing) {
+        existing.qty++;
+      } else {
+        bill.push({ ...item, qty: 1 });
+      }
+      renderBill();
+    }
+
+    function updateQty(index, qty) {
+      if (qty <= 0) {
+        bill.splice(index, 1);
+      } else {
+        bill[index].qty = qty;
+      }
+      renderBill();
+    }
+
+    function removeFromBill(index) {
+      bill.splice(index, 1);
+      renderBill();
+    }
+
+    function renderBill() {
+      const tbody = document.querySelector("#bill-table tbody");
+      tbody.innerHTML = "";
+      let total = 0;
+
+      bill.forEach((item, index) => {
+        const row = document.createElement("tr");
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td><input type="number" value="${item.qty}" min="1" onchange="updateQty(${index}, this.value)"></td>
+          <td>₹${item.price}</td>
+          <td>₹${itemTotal}</td>
+          <td><button onclick="removeFromBill(${index})">x</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("grand-total").innerText = "Grand Total: ₹" + total;
+    }
+
+    renderMenu();
+  </script>
+</body>
+</html>
